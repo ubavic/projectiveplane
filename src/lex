@@ -1,0 +1,45 @@
+lex
+  match  NUMBER     /-?[0-9]+(?:\.[0-9]+)?/
+  match  PLUS       '+'
+  match  XVAR       /[Xx]/
+  match  YVAR       /[Yy]/
+  ignore WHITESPACE /^\s+/
+/lex
+
+addition
+  | monome then :PLUS then (addition as :add)
+  |> 'return [$1].concat($.add)'
+  | monome
+  |> 'return [$1]'
+  ;
+
+monome
+  | (?number as :num) then (?xpower as :xp) then (?ypower as :yp)
+  |> 'return {c: $.num, xp: $.xp, yp: $.yp }'
+  ;
+
+xpower
+  | :XVAR then nat
+  |> 'return $2'
+  | :XVAR
+  |> 'return 1'
+  ;
+
+ypower
+  | :YVAR then nat
+  |> 'return $2'
+  | :YVAR
+  |> 'return 1'
+  ;
+
+nat
+  | :NUMBER 'return parseInt($1)'
+  ;
+
+number
+  | :NUMBER 'return parseFloat($1)'
+  ;
+
+start
+  | addition
+  ;
