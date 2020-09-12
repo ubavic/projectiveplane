@@ -12,25 +12,25 @@ var drag = [false, false, false];
 options = {axis : true, triangle : true, level : false };
 var M =[1, 0, 0, 0, 1, 0, 0, 0, 1];
 var Mi;
-var I = [1, 0, 0, 0, 1, 0, 0, 0, 1];			  
+var I = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 var A = [];
 
 curves = [
-	"X2+2Y2+-1",            //elipse
-	"X2+-1Y",               //parabola
-	"X2+-1Y2+-1",           //hyperbola
-	"Y2+-1X3+4X",            //eliptic
-	"Y2+-1X3",              //semicubical parabola
-	"X3+Y3+-3XY",           //folium of Descartes
-	"X2Y+Y+-1",             //witch of Agnesi
-	"X4+2X2Y2+Y4+-1X2+Y2",  //lemniscate of Bernoulli
-	"4X2+Y4+-4Y2",          //Viviani's Curve
+	"X2+2Y2+-1",			//elipse
+	"X2+-1Y",				//parabola
+	"X2+-1Y2+-1",			//hyperbola
+	"Y2+-1X3+4X",			//eliptic
+	"Y2+-1X3",				//semicubical parabola
+	"X3+Y3+-3XY",			//folium of Descartes
+	"X2Y+Y+-1",				//witch of Agnesi
+	"X4+2X2Y2+Y4+-1X2+Y2",	//lemniscate of Bernoulli
+	"4X2+Y4+-4Y2",			//Viviani's Curve
 	"X4+2X2Y2+Y4+-1X3+3XY2" //Three-leaved clover
 ];
 
 
 function ToCanvasCoordinates (x, y) {
-	return {w:  width * (zoom * x + 1) / 2, h : height * (1 - zoom*y) / 2 };
+	return {w: width * (zoom * x + 1) / 2, h : height * (1 - zoom*y) / 2 };
 }
 
 function ToPlaneCoordinates (w, h) {
@@ -40,8 +40,8 @@ function ToPlaneCoordinates (w, h) {
 function ToProjectiveCoordinates (x, y) {
 	var z = Math.sqrt(1 - x**2 - y**2);
 	return {X : Mi[0]*x + Mi[1]*y + Mi[2]*z,
-		    Y : Mi[3]*x + Mi[4]*y + Mi[5]*z,
-		    Z : Mi[6]*x + Mi[7]*y + Mi[8]*z}
+			Y : Mi[3]*x + Mi[4]*y + Mi[5]*z,
+			Z : Mi[6]*x + Mi[7]*y + Mi[8]*z}
 }
 
 function Det (M) {
@@ -68,7 +68,7 @@ function polynomialEval (x, y) {
 	var result = 0;
 
 	for (var i = 0; i < eq.length; i++) {
-		result = result + eq[i].c * (c.X ** eq[i].xp) * (c.Y ** eq[i].yp) * (c.Z ** (degree - eq[i].xp - eq[i].yp));  
+		result = result + eq[i].c * (c.X ** eq[i].xp) * (c.Y ** eq[i].yp) * (c.Z ** (degree - eq[i].xp - eq[i].yp));
 	}
 
 	return result;
@@ -105,7 +105,7 @@ function Draw () {
 	ctx.fillStyle ="#FF0000";
 	for (var i = 1; i < width - 1; i++) {
 		for (var j = 1; j < height -1; j++) {
-			if (options.level && A [i* width + j]  < 0.1 &&  A [i* width + j]  > - 0.1  ) {
+			if (options.level && A [i* width + j] < 0.1 && A [i* width + j] > - 0.1) {
 				ctx.fillStyle ="#CCCCCC";
 				ctx.fillRect(i, j, 1, 1);
 				ctx.fillStyle ="#FF0000";
@@ -165,15 +165,15 @@ function Setup () {
 		let dot = document.getElementById("dot" + i);
 		
 		var norm = Norm([M[i + 0], M[i + 3], M[i + 6]]);
-    	var coordinates = ToCanvasCoordinates(M[i + 0] / norm, M[i + 3] / norm);
+		var coordinates = ToCanvasCoordinates(M[i + 0] / norm, M[i + 3] / norm);
 
-    	dot.style.top = (coordinates.h - 3) + "px";
-    	dot.style.left = (coordinates.w - 3) + "px";
+		dot.style.top = (coordinates.h - 3) + "px";
+		dot.style.left = (coordinates.w - 3) + "px";
 
 		dot.onmousedown = function (e) {
 			drag[i] = true;
 			document.body.style.cursor = "grab";
-    		lambdas[i] = Norm([M[i + 0], M[i + 3], M[i + 6]]);;
+			lambdas[i] = Norm([M[i + 0], M[i + 3], M[i + 6]]);;
 		};
 
 
@@ -181,15 +181,15 @@ function Setup () {
 			e.preventDefault();
 
 			if (event.deltaY < 0) {
-	 			lambda = 1.1
-	    	} else {
-	    		lambda = 0.9;
-	    	}
+				lambda = 1.1
+			} else {
+				lambda = 0.9;
+			}
 	
-	    	M[i + 0] =  lambda * M[i + 0];
-	    	M[i + 3] =  lambda * M[i + 3];
-	    	M[i + 6] =  lambda * M[i + 6];
-	    	changed = true;
+			M[i + 0] = lambda * M[i + 0];
+			M[i + 3] = lambda * M[i + 3];
+			M[i + 6] = lambda * M[i + 6];
+			changed = true;
 		};
 	}
 
@@ -208,56 +208,56 @@ function Setup () {
 
 		if (drag [0]) {
 			if (coordinates.x**2 + coordinates.y**2 <= 1){
-	   			M[0] = lambdas[0] * coordinates.x;
-	   			M[3] = lambdas[0] * coordinates.y;
-	   			M[6] = lambdas[0] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
-	   		} else {
-	   			M[0] = lambdas[0] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	   			M[3] = lambdas[0] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	   			M[6] = lambdas[0] * 0;
-	   		}
+	 			M[0] = lambdas[0] * coordinates.x;
+	 			M[3] = lambdas[0] * coordinates.y;
+	 			M[6] = lambdas[0] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
+	 		} else {
+	 			M[0] = lambdas[0] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[3] = lambdas[0] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[6] = lambdas[0] * 0;
+	 		}
 	
 			var norm = Norm([M[0], M[3], M[6]]);
-    		coordinates = ToCanvasCoordinates(M[0] / norm, M[3] / norm);
-    		document.getElementById("dot0").style.left = (coordinates.w- 3) + "px";
-    		document.getElementById("dot0").style.top = (coordinates.h - 3) + "px";
+			coordinates = ToCanvasCoordinates(M[0] / norm, M[3] / norm);
+			document.getElementById("dot0").style.left = (coordinates.w- 3) + "px";
+			document.getElementById("dot0").style.top = (coordinates.h - 3) + "px";
 
-	   		changed = true;
+	 		changed = true;
 
 
-	   	} else if (drag [1]) {
+	 	} else if (drag [1]) {
 			if (coordinates.x**2 + coordinates.y**2 <= 1){
-	   			M[1] = lambdas[1] * coordinates.x;
-	   			M[4] = lambdas[1] * coordinates.y;
-	   			M[7] = lambdas[1] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
-	   		} else {
-	   			M[1] = lambdas[1] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	   			M[4] = lambdas[1] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	   			M[7] = lambdas[1] * 0;
-	   		}
-	   		var norm = Norm([M[1], M[4], M[7]]);
-    		coordinates = ToCanvasCoordinates(M[1] / norm, M[4] / norm);
-    		document.getElementById("dot1").style.left = (coordinates.w - 3) + "px";
-    		document.getElementById("dot1").style.top = (coordinates.h - 3) + "px";
+	 			M[1] = lambdas[1] * coordinates.x;
+	 			M[4] = lambdas[1] * coordinates.y;
+	 			M[7] = lambdas[1] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
+	 		} else {
+	 			M[1] = lambdas[1] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[4] = lambdas[1] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[7] = lambdas[1] * 0;
+	 		}
+	 		var norm = Norm([M[1], M[4], M[7]]);
+			coordinates = ToCanvasCoordinates(M[1] / norm, M[4] / norm);
+			document.getElementById("dot1").style.left = (coordinates.w - 3) + "px";
+			document.getElementById("dot1").style.top = (coordinates.h - 3) + "px";
 
-	   		changed = true;
-	   	} else if (drag [2]) {
+	 		changed = true;
+	 	} else if (drag [2]) {
 			if (coordinates.x**2 + coordinates.y**2 <= 1){
-	   			M[2] = lambdas[2] * coordinates.x;
-	   			M[5] = lambdas[2] * coordinates.y;
-	   			M[8] = lambdas[2] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
-	   		} else {
-	   			M[2] = lambdas[2] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	   			M[5] = lambdas[2] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	   			M[8] = lambdas[2] * 0;
-	   		}
-	   		var norm = Norm([M[2], M[5], M[8]]);
-    		coordinates = ToCanvasCoordinates(M[2] / norm, M[5] / norm);
-    		document.getElementById("dot2").style.left = (coordinates.w - 3) + "px";
-    		document.getElementById("dot2").style.top = (coordinates.h  - 3) + "px";
+	 			M[2] = lambdas[2] * coordinates.x;
+				M[5] = lambdas[2] * coordinates.y;
+	 			M[8] = lambdas[2] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
+	 		} else {
+	 			M[2] = lambdas[2] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[5] = lambdas[2] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[8] = lambdas[2] * 0;
+	 		}
+	 		var norm = Norm([M[2], M[5], M[8]]);
+			coordinates = ToCanvasCoordinates(M[2] / norm, M[5] / norm);
+			document.getElementById("dot2").style.left = (coordinates.w - 3) + "px";
+			document.getElementById("dot2").style.top = (coordinates.h - 3) + "px";
 
-	   		changed = true;
-	   	}
+	 		changed = true;
+	 	}
 
 	}
 
@@ -313,13 +313,13 @@ function Parse () {
 		eq1 = pasukon.parse(equationField.value);
 
 	} catch (error) {
-  		equationDiv.innerHTML = "<span style='color:#F00'>" + error + "</span>";
-  		error = true;
+		equationDiv.innerHTML = "<span style='color:#F00'>" + error + "</span>";
+		error = true;
 	}
 
 	if (!error) {
 		for (var i = 0; i < eq1.length; i++) {
-			if (eq1[i].c == null)  {eq1[i].c = 1;}
+			if (eq1[i].c == null) {eq1[i].c = 1;}
 			if (eq1[i].xp == null) {eq1[i].xp = 0;}
 			if (eq1[i].yp == null) {eq1[i].yp = 0;}
 			degree = Math.max(degree, eq1[i].xp + eq1[i].yp);
