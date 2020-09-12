@@ -67,6 +67,24 @@ input:focus{
 	text-align: center;
 }
 
+.dot {
+	border-radius: 50%;
+	border: 1px solid black;
+	width: 6px;
+	height: 6px; 
+	background-color: #AAF;
+	position: absolute; 
+	z-index: 2;
+	top: 0;
+	left: 0; 
+}
+
+.dot:hover {
+	cursor: grab;
+	background-color: #99D; 
+}
+
+
 @media only screen and (max-width: 1000px) {
 	main {
 		flex-direction: column;
