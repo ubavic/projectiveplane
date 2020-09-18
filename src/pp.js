@@ -2,8 +2,7 @@ var ctx;
 var width, height;
 var zoom = 0.9;
 var changed = true;
-var lambda = 1;
-var lambdas = [1, 1 , 1];
+var lambda = 1, lambdas = 1;
 var pasukon;
 var eq, degree;
 var equationField, equationDiv, equationDropDown;
@@ -105,7 +104,7 @@ function Draw () {
 	ctx.fillStyle ="#FF0000";
 	for (var i = 1; i < width - 1; i++) {
 		for (var j = 1; j < height -1; j++) {
-			if (options.level && A [i* width + j] < 0.1 && A [i* width + j] > - 0.1) {
+			if (options.level && Math.abs(A [i* width + j]) < 0.1) {
 				ctx.fillStyle ="#DD999966";
 				ctx.fillRect(i, j, 1, 1);
 				ctx.fillStyle ="#FF0000";
@@ -173,7 +172,7 @@ function Setup () {
 		dot.onmousedown = function (e) {
 			drag[i] = true;
 			document.body.style.cursor = "grab";
-			lambdas[i] = Norm([M[i + 0], M[i + 3], M[i + 6]]);;
+			lambdas = Norm([M[i + 0], M[i + 3], M[i + 6]]);;
 		};
 
 
@@ -206,59 +205,26 @@ function Setup () {
 		var y = e.pageY - document.getElementById("canvasContainer").offsetTop;
 		var coordinates = ToPlaneCoordinates(x, y);
 
-		if (drag [0]) {
-			if (coordinates.x**2 + coordinates.y**2 <= 1){
-	 			M[0] = lambdas[0] * coordinates.x;
-	 			M[3] = lambdas[0] * coordinates.y;
-	 			M[6] = lambdas[0] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
-	 		} else {
-	 			M[0] = lambdas[0] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 			M[3] = lambdas[0] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 			M[6] = lambdas[0] * 0;
-	 		}
+		for (var i = 0; i < 3; i++){
+			if (drag [i]) {
+				if (coordinates.x**2 + coordinates.y**2 <= 1){
+	 				M[i + 0] = lambdas * coordinates.x;
+	 				M[i + 3] = lambdas * coordinates.y;
+	 				M[i + 6] = lambdas * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
+	 			} else {
+	 				M[i + 0] = lambdas * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 				M[i + 3] = lambdas * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 				M[i + 6] = lambdas * 0;
+	 			}
 	
-			var norm = Norm([M[0], M[3], M[6]]);
-			coordinates = ToCanvasCoordinates(M[0] / norm, M[3] / norm);
-			document.getElementById("dot0").style.left = (coordinates.w- 3) + "px";
-			document.getElementById("dot0").style.top = (coordinates.h - 3) + "px";
-
-	 		changed = true;
-
-
-	 	} else if (drag [1]) {
-			if (coordinates.x**2 + coordinates.y**2 <= 1){
-	 			M[1] = lambdas[1] * coordinates.x;
-	 			M[4] = lambdas[1] * coordinates.y;
-	 			M[7] = lambdas[1] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
-	 		} else {
-	 			M[1] = lambdas[1] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 			M[4] = lambdas[1] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 			M[7] = lambdas[1] * 0;
+				var norm = Norm([M[i + 0], M[i + 3], M[i + 6]]);
+				coordinates = ToCanvasCoordinates(M[i + 0] / norm, M[i + 3] / norm);
+				document.getElementById("dot" + i).style.left = (coordinates.w- 3) + "px";
+				document.getElementById("dot" + i).style.top = (coordinates.h - 3) + "px";
+	 			changed = true;
+	 			break;
 	 		}
-	 		var norm = Norm([M[1], M[4], M[7]]);
-			coordinates = ToCanvasCoordinates(M[1] / norm, M[4] / norm);
-			document.getElementById("dot1").style.left = (coordinates.w - 3) + "px";
-			document.getElementById("dot1").style.top = (coordinates.h - 3) + "px";
-
-	 		changed = true;
-	 	} else if (drag [2]) {
-			if (coordinates.x**2 + coordinates.y**2 <= 1){
-	 			M[2] = lambdas[2] * coordinates.x;
-				M[5] = lambdas[2] * coordinates.y;
-	 			M[8] = lambdas[2] * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
-	 		} else {
-	 			M[2] = lambdas[2] * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 			M[5] = lambdas[2] * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 			M[8] = lambdas[2] * 0;
-	 		}
-	 		var norm = Norm([M[2], M[5], M[8]]);
-			coordinates = ToCanvasCoordinates(M[2] / norm, M[5] / norm);
-			document.getElementById("dot2").style.left = (coordinates.w - 3) + "px";
-			document.getElementById("dot2").style.top = (coordinates.h - 3) + "px";
-
-	 		changed = true;
-	 	}
-
+		}
 	}
 
 	//document.getElementById("checkboxAxis").checked = options.axis;
@@ -293,9 +259,15 @@ function Setup () {
 
 function ResetTransformation () {
 	M = I.slice();
-	lambdas[0] = 1;
-	lambdas[1] = 1;
-	lambdas[2] = 1;
+	lambdas = 1;
+
+	for (var i = 0; i < 3; i++) {
+		var norm = Norm([M[i + 0], M[i + 3], M[i + 6]]);
+		coordinates = ToCanvasCoordinates(M[i + 0] / norm, M[i + 3] / norm);
+		document.getElementById("dot" + i).style.left = (coordinates.w - 3) + "px";
+		document.getElementById("dot" + i).style.top = (coordinates.h - 3) + "px";
+	}
+
 	changed = true;
 }
 
