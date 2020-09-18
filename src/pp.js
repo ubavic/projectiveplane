@@ -9,7 +9,7 @@ var eq, degree;
 var equationField, equationDiv, equationDropDown;
 var points = {xdrag : false, ydrag : false, zdrag : false};
 var drag = [false, false, false]; 
-options = {axis : true, triangle : true, level : false };
+var options = {axis : true, chessboard: true, triangle : true, level : false };
 var M =[1, 0, 0, 0, 1, 0, 0, 0, 1];
 var Mi;
 var I = [1, 0, 0, 0, 1, 0, 0, 0, 1];
@@ -52,7 +52,7 @@ function Inverse (M) {
 	det = Det(M);
 	return [   (M[4]*M[8] - M[7]*M[5])/det, -1*(M[1]*M[8] - M[2]*M[7])/det,    (M[1]*M[5] - M[2]*M[4])/det,
 			-1*(M[3]*M[8] - M[5]*M[6])/det,    (M[0]*M[8] - M[2]*M[6])/det, -1*(M[0]*M[5] - M[2]*M[3])/det,
-			   (M[3]*M[5] - M[4]*M[6])/det, -1*(M[0]*M[7] - M[1]*M[6])/det,    (M[0]*M[4] - M[1]*M[3])/det];
+			   (M[3]*M[7] - M[4]*M[6])/det, -1*(M[0]*M[7] - M[1]*M[6])/det,    (M[0]*M[4] - M[1]*M[3])/det];
 }
 
 function Norm(u) {
@@ -94,7 +94,7 @@ function Draw () {
 			}
 
 			coordinates2 = ToProjectiveCoordinates(coordinates.x, coordinates.y)
-			if ( (Math.floor(coordinates2.X/coordinates2.Z) + Math.floor(coordinates2.Y/coordinates2.Z)) % 2 == 0) {
+			if (options.chessboard == true && (Math.floor(coordinates2.X/coordinates2.Z) + Math.floor(coordinates2.Y/coordinates2.Z)) % 2 == 0) {
 				ctx.fillStyle ="#CCCCCC";
 				ctx.fillRect(i, j, 1, 1);
 			}
@@ -106,7 +106,7 @@ function Draw () {
 	for (var i = 1; i < width - 1; i++) {
 		for (var j = 1; j < height -1; j++) {
 			if (options.level && A [i* width + j] < 0.1 && A [i* width + j] > - 0.1) {
-				ctx.fillStyle ="#CCCCCC";
+				ctx.fillStyle ="#DD999966";
 				ctx.fillRect(i, j, 1, 1);
 				ctx.fillStyle ="#FF0000";
 			}
@@ -264,6 +264,7 @@ function Setup () {
 	//document.getElementById("checkboxAxis").checked = options.axis;
 	document.getElementById("checkboxTriangle").checked = options.triangle;
 	document.getElementById("checkboxLevel").checked = options.level;
+	document.getElementById("checkboxChessboard").checked = options.chessboard;
 
 	equationField = document.getElementById("equationField")
 	equationDropDown = document.getElementById("equationDropDown");
