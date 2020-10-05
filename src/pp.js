@@ -67,11 +67,120 @@ function polynomialEval (x, y) {
 	var result = 0;
 
 	for (var i = 0; i < eq.length; i++) {
-		result = result + eq[i].c * (c.X ** eq[i].xp) * (c.Y ** eq[i].yp) * (c.Z ** (degree - eq[i].xp - eq[i].yp));
+		result = result + eq[i].c * (c.X ** eq[i].xp) * (c.Y ** eq[i].yp) * (c.Z ** eq[i].zp);
 	}
 
 	return result;
 }
+
+function SimplifyPolynome (p) {
+	var i, j;
+	var q = [];
+
+	for (i = 0; i < p.length; i++) {
+		for (j = i + 1; j < p.length; j++) {
+			if (p[i].xp == p[j].xp && p[i].yp == p[j].yp && p[i].zp == p[j].zp) {
+				p[i].c = p[i].c + p[j].c;
+				p[j].c = 0;
+			}
+		}
+	}
+
+	var q;
+	j = 0;
+
+	for (i = 0; i < p.length; i++) {
+		if (p[i].c != 0){
+			q[j++] = p[i];
+		}
+	}
+
+	return q;
+}
+
+function MultiplePolinomes (p, q) {
+	var i, j;
+	var t = [];
+
+	for (i = 0; i < p.length; i++) {
+		for (j = 0; j < q.length; j++) {
+			t[i * q.length + j] = {	xp: p[i].xp + q[j].xp,
+								  	yp: p[i].yp + q[j].yp,
+								  	zp: p[i].zp + q[j].zp,
+									c: p[i].c * q[j].c };
+		}
+	}
+
+	return t;
+}
+
+
+function DerivePolynome (p, variable) {
+	var q = [];
+
+	if (variable == "x" || variable == "X") {
+		for (var i = 0; i < p.length; i++) {
+			q[i] = {xp: (p[i].xp - 1), yp: p[i].yp, zp: p[i].zp, c: (p[i].c * p[i].xp)};
+		}
+	} else if (variable == "y" || variable == "Y") {
+		for (var i = 0; i < p.length; i++) {
+			q[i] = {xp: p[i].xp, yp: (p[i].yp - 1), zp: p[i].zp, c: (p[i].c * p[i].yp)};
+		}
+	} else {
+		for (var i = 0; i < p.length; i++) {
+			q[i] = {xp: p[i].xp, yp: p[i].yp, zp: (p[i].zp - 1), c: (p[i].c * p[i].zp)};
+		}
+	}
+
+	for (var i = 0; i < q.length; i++) {
+		if ((q[i].xp + 1) *(q[i].yp + 1) * (q[i].zp + 1) == 0) {
+			q[i] = {xp: 0, yp: 0, zp: 0, c: 0};
+		}
+	}
+
+	return SimplifyPolynome(q);
+}
+
+
+function ScalePolynome (p, lambda) {
+	var q = [];
+
+	for (var i = 0; i < p.length; i++) {
+		q[i] = {xp: p[i].xp, yp: p[i].yp, zp: p[i].zp, c: lambda * p[i].c};
+	}
+
+	return q;
+}
+
+
+function AddPolynomes (p, q) {
+	return SimplifyPolynome (p.concat(q));
+}
+
+function SubPolynomes (p, q) {
+	return AddPolynomes (p, ScalePolynome(q, -1));
+}
+
+
+function Hessian (p) {
+	var px = DerivePolynome(p, "x");
+	var py = DerivePolynome(p, "y");
+	var pz = DerivePolynome(p, "z");
+	var pxx = DerivePolynome(px, "x");
+	var pxy = DerivePolynome(px, "y");
+	var pxz = DerivePolynome(px, "z");
+	var pyy = DerivePolynome(py, "y");
+	var pyz = DerivePolynome(py, "z");
+	var pzz = DerivePolynome(pz, "z");
+
+	var M1 = MultiplePolinomes(pxx, SubPolynomes(MultiplePolinomes(pyy, pzz), MultiplePolinomes(pyz, pyz)));
+	var M2 = MultiplePolinomes(pxy, SubPolynomes(MultiplePolinomes(pxy, pzz), MultiplePolinomes(pxz, pyz)));
+	var M3 = MultiplePolinomes(pxz, SubPolynomes(MultiplePolinomes(pxy, pyz), MultiplePolinomes(pyy, pxz)));
+
+	return AddPolynomes(M1, SubPolynomes(M3, M2));
+
+}
+
 
 function Draw () {
 	var coordinates, norm;
@@ -90,14 +199,13 @@ function Draw () {
 			coordinates = ToPlaneCoordinates(i, j);
 			if (coordinates.x**2 + coordinates.y**2 < 1) {
 				A[i * width + j] = polynomialEval(coordinates.x, coordinates.y);
-			}
 
-			coordinates2 = ToProjectiveCoordinates(coordinates.x, coordinates.y)
-			if (options.chessboard == true && (Math.floor(coordinates2.X/coordinates2.Z) + Math.floor(coordinates2.Y/coordinates2.Z)) % 2 == 0) {
-				ctx.fillStyle ="#CCCCCC";
-				ctx.fillRect(i, j, 1, 1);
+				coordinates2 = ToProjectiveCoordinates(coordinates.x, coordinates.y)
+				if (options.chessboard == true && (Math.floor(coordinates2.X/coordinates2.Z) + Math.floor(coordinates2.Y/coordinates2.Z)) % 2 == 0) {
+					ctx.fillStyle ="#CCCCCC";
+					ctx.fillRect(i, j, 1, 1);
+				}
 			}
-
 		}
 	}
 
@@ -109,7 +217,7 @@ function Draw () {
 				ctx.fillRect(i, j, 1, 1);
 				ctx.fillStyle ="#FF0000";
 			}
-			if (Math.abs(A [i * width + j]) < 1 && (A [(i-1) * width + j] * A [(i+1) * width + j] < 0 || A [i * width + j - 1] * A [i * width + j + 1] < 0)) {
+			if (Math.abs(A [i * width + j]) < 1000 && (A [(i-1) * width + j] * A [(i+1) * width + j] < 0 || A [i * width + j - 1] * A [i * width + j + 1] < 0)) {
 				ctx.fillRect(i, j, 1, 1);
 			}
 		}
@@ -175,6 +283,10 @@ function Setup () {
 			lambdas = Norm([M[i + 0], M[i + 3], M[i + 6]]);;
 		};
 
+		dot.ondblclick = function (e) {
+			M[i + 6] = -1 * M[i + 6];
+			changed = true;
+		}
 
 		dot.onwheel = function (e) {
 			e.preventDefault();
@@ -207,14 +319,15 @@ function Setup () {
 
 		for (var i = 0; i < 3; i++){
 			if (drag [i]) {
+				var sign = (M[i + 6] >= 0) ? 1 : -1;
 				if (coordinates.x**2 + coordinates.y**2 <= 1){
 	 				M[i + 0] = lambdas * coordinates.x;
 	 				M[i + 3] = lambdas * coordinates.y;
-	 				M[i + 6] = lambdas * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
+	 				M[i + 6] = sign * lambdas * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
 	 			} else {
 	 				M[i + 0] = lambdas * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
 	 				M[i + 3] = lambdas * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 				M[i + 6] = lambdas * 0;
+	 				M[i + 6] = sign * lambdas * 0;
 	 			}
 	
 				var norm = Norm([M[i + 0], M[i + 3], M[i + 6]]);
@@ -277,32 +390,51 @@ function SaveImage () {
 	window.location.href=image;
 }
 
+function ParsePolynome (str) {
+	var error = false;
+	var errorStr;
+	var p = [];
+
+	try {
+		p = pasukon.parse(str);
+	} catch (errorStr) {
+		throw errorStr;
+	}
+
+	for (var i = 0; i < p.length; i++) {
+		if (p[i].c == null) {p[i].c = 1;}
+		if (p[i].xp == null) {p[i].xp = 0;}
+		if (p[i].yp == null) {p[i].yp = 0;}
+		if (p[i].zp == null) {p[i].zp = 0;}
+	}
+
+	return p;
+}
+
 function Parse () {	
 	var error = false;
 	var eq1;
 	degree = 0;
 
 	try {
-		eq1 = pasukon.parse(equationField.value);
-
+		p = ParsePolynome(equationField.value);
 	} catch (error) {
 		equationDiv.innerHTML = "<span style='color:#F00'>" + error + "</span>";
 		error = true;
 	}
 
-	if (!error) {
-		for (var i = 0; i < eq1.length; i++) {
-			if (eq1[i].c == null) {eq1[i].c = 1;}
-			if (eq1[i].xp == null) {eq1[i].xp = 0;}
-			if (eq1[i].yp == null) {eq1[i].yp = 0;}
-			degree = Math.max(degree, eq1[i].xp + eq1[i].yp);
-		}
-
-		eq = eq1;
-		equationDiv.innerHTML = CreateEquationHTML ();
-
-		changed = true;
+	for (var i = 0; i < p.length; i++) {
+		degree = Math.max(degree, p[i].xp + p[i].yp); 
 	}
+
+	for (var i = 0; i < p.length; i++) {
+		p[i].zp = degree - p[i].xp - p[i].yp;
+	}
+
+	eq = p;
+	equationDiv.innerHTML = CreateEquationHTML();
+	changed = true;
+
 }
 
 function CreateEquationHTML () {
