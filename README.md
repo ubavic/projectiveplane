@@ -16,7 +16,7 @@ The only dependency is [Pasukon](https://github.com/gosukiwi/Pasukon) parser gen
 
 ## Credits
 
-The author of this program is [Nikola Ubavić](http://alas.matf.bg.ac.rs/~mm16310/index_en.html). 
+The author of this program is [Nikola Ubavić](https://ubavic.rs/?lang=en). 
 
 Author of Pasukon library is Federico Ramirez.
 
