@@ -69,10 +69,11 @@
 		<button onclick="ResetTransformation()">Reset matrix</button>
 		</div>
 
-		<p>Draw:
-				<span><input style="margin-left: 10px;" type="checkbox" id="checkboxTriangle" onclick="options.triangle = !options.triangle; changed = true;"> <label>Coordinate triangle</label></span>
-				<span><input style="margin-left: 10px;" type="checkbox" id="checkboxLevel" onclick="options.level = !options.level; changed = true;"> <label>Level set</label></span>
-				<span><input style="margin-left: 10px;" type="checkbox" id="checkboxChessboard" onclick="options.chessboard = !options.chessboard; changed = true;"> <label>Chessboard</label></span>
+		<p>Draw: <div>
+				<span><input style="margin-left: 10px;" type="checkbox" id="checkboxTriangle" onclick="options.triangle = !options.triangle; changed = true;"> <label>Coordinate triangle</label></span><br>
+				<span><input style="margin-left: 10px;" type="checkbox" id="checkboxLevel" onclick="options.level = !options.level; changed = true;"> <label>Level set</label></span><br>
+				<span><input style="margin-left: 10px;" type="checkbox" id="checkboxChessboard" onclick="options.chessboard = !options.chessboard; changed = true;"> <label>Chessboard</label></span><br>
+				<span><input style="margin-left: 10px;" type="checkbox" id="checkboxHessian" onclick="options.hessian = !options.hessian; changed = true;"> <label>Hessian curve</label></span></div>
 		</p>
 
 	</div>
@@ -92,9 +93,7 @@
 <script src="grammar.js"></script>
 <script src="pp.js"></script>
 <script>
-
-window.onload = Setup();
-
+	window.onload = Setup();
 </script>
 
 

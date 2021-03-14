@@ -4,15 +4,15 @@ var zoom = 0.9;
 var changed = true;
 var lambda = 1, lambdas = 1;
 var pasukon;
-var eq, degree;
+var userCurve = {polynomial: 0, degree: 0}, hessianCurve = {polynomial: 0, degree: 0};
 var equationField, equationDiv, equationDropDown;
 var points = {xdrag : false, ydrag : false, zdrag : false};
 var drag = [false, false, false]; 
-var options = {axis : true, chessboard: true, triangle : true, level : false };
+var options = {axis : true, chessboard: true, triangle : true, level : false, hessian: false};
 var M =[1, 0, 0, 0, 1, 0, 0, 0, 1];
 var Mi;
 var I = [1, 0, 0, 0, 1, 0, 0, 0, 1];
-var A = [];
+var A = [], H = [];
 
 curves = [
 	"X2+2Y2+-1",			//elipse
@@ -62,12 +62,11 @@ function VectorProduct (u, v) {
 	return [u[1]*v[2] - u[2]*v[1], u[2]*v[0] - u[0]*v[2], u[0]*v[1] - u[1]*v[0]];
 }
 
-function polynomialEval (x, y) {
-	var c = ToProjectiveCoordinates (x, y);
+function polynomialEval (p, X, Y, Z) {
 	var result = 0;
 
-	for (var i = 0; i < eq.length; i++) {
-		result = result + eq[i].c * (c.X ** eq[i].xp) * (c.Y ** eq[i].yp) * (c.Z ** eq[i].zp);
+	for (var i = 0; i < p.length; i++) {
+		result = result + p[i].c * (X ** p[i].xp) * (Y ** p[i].yp) * (Z ** p[i].zp);
 	}
 
 	return result;
@@ -178,12 +177,11 @@ function Hessian (p) {
 	var M3 = MultiplePolinomes(pxz, SubPolynomes(MultiplePolinomes(pxy, pyz), MultiplePolinomes(pyy, pxz)));
 
 	return AddPolynomes(M1, SubPolynomes(M3, M2));
-
 }
 
 
 function Draw () {
-	var coordinates, norm;
+	var coordinates, norm, c;
 	ctx.clearRect(0, 0, width, height);
 
 	ctx.fillStyle ="#EEEEEE";
@@ -194,15 +192,28 @@ function Draw () {
 	ctx.stroke();
 	ctx.fill();
 
+	ctx.fillStyle ="#CCCCCC";
 	for (var i = 0; i < width; i++) {
 		for (var j = 0; j < height; j++) {
 			coordinates = ToPlaneCoordinates(i, j);
 			if (coordinates.x**2 + coordinates.y**2 < 1) {
-				A[i * width + j] = polynomialEval(coordinates.x, coordinates.y);
+				c = ToProjectiveCoordinates (coordinates.x, coordinates.y);
+				A[i * width + j] = polynomialEval(userCurve.polynomial, c.X, c.Y, c.Z);
+				H[i * width + j] = polynomialEval(hessianCurve.polynomial, c.X, c.Y, c.Z);
 
-				coordinates2 = ToProjectiveCoordinates(coordinates.x, coordinates.y)
-				if (options.chessboard == true && (Math.floor(coordinates2.X/coordinates2.Z) + Math.floor(coordinates2.Y/coordinates2.Z)) % 2 == 0) {
-					ctx.fillStyle ="#CCCCCC";
+				if (options.chessboard == true && (Math.floor(c.X/c.Z) + Math.floor(c.Y/c.Z)) % 2 == 0) {
+					ctx.fillRect(i, j, 1, 1);
+				}
+			}
+		}
+	}
+
+
+	if(options.hessian){
+		ctx.fillStyle ="#0033FF";
+		for (var i = 1; i < width - 1; i++) {
+			for (var j = 1; j < height -1; j++) {
+				if (Math.abs(H [i * width + j]) < 1000 && (H [(i-1) * width + j] * H [(i+1) * width + j] < 0 || H [i * width + j - 1] * H [i * width + j + 1] < 0)) {
 					ctx.fillRect(i, j, 1, 1);
 				}
 			}
@@ -212,13 +223,14 @@ function Draw () {
 	ctx.fillStyle ="#FF0000";
 	for (var i = 1; i < width - 1; i++) {
 		for (var j = 1; j < height -1; j++) {
+			if (Math.abs(A [i * width + j]) < 1000 && (A [(i-1) * width + j] * A [(i+1) * width + j] < 0 || A [i * width + j - 1] * A [i * width + j + 1] < 0)) {
+				ctx.fillRect(i, j, 1, 1);
+				continue;
+			}
 			if (options.level && Math.abs(A [i* width + j]) < 0.1) {
 				ctx.fillStyle ="#DD999966";
 				ctx.fillRect(i, j, 1, 1);
-				ctx.fillStyle ="#FF0000";
-			}
-			if (Math.abs(A [i * width + j]) < 1000 && (A [(i-1) * width + j] * A [(i+1) * width + j] < 0 || A [i * width + j - 1] * A [i * width + j + 1] < 0)) {
-				ctx.fillRect(i, j, 1, 1);
+				ctx.fillStyle ="#FF0000"
 			}
 		}
 	}
@@ -334,6 +346,7 @@ function Setup () {
 	document.getElementById("checkboxTriangle").checked = options.triangle;
 	document.getElementById("checkboxLevel").checked = options.level;
 	document.getElementById("checkboxChessboard").checked = options.chessboard;
+	document.getElementById("checkboxHessian").checked = options.hessian;
 
 	equationField = document.getElementById("equationField")
 	equationDropDown = document.getElementById("equationDropDown");
@@ -342,7 +355,6 @@ function Setup () {
 	pasukon = new Pasukon(grammar);
 	equationDropDown.value = 0;
 	equationField.value = curves[0];
-	degree = 0;
 	Parse();
 
 	equationField.oninput = function(e) {
@@ -404,7 +416,7 @@ function ParsePolynome (str) {
 function Parse () {	
 	var error = false;
 	var eq1;
-	degree = 0;
+	userCurve.degree = 0;
 
 	try {
 		p = ParsePolynome(equationField.value);
@@ -414,52 +426,54 @@ function Parse () {
 	}
 
 	for (var i = 0; i < p.length; i++) {
-		degree = Math.max(degree, p[i].xp + p[i].yp); 
+		userCurve.degree = Math.max(userCurve.degree, p[i].xp + p[i].yp); 
 	}
 
 	for (var i = 0; i < p.length; i++) {
-		p[i].zp = degree - p[i].xp - p[i].yp;
+		p[i].zp = userCurve.degree - p[i].xp - p[i].yp;
 	}
 
-	eq = p;
-	equationDiv.innerHTML = CreateEquationHTML();
+	userCurve.polynomial = p;
+	hessianCurve.polynomial = Hessian(userCurve.polynomial);
+	equationDiv.innerHTML = CreateEquationHTML(userCurve);
 	changed = true;
 
 }
 
-function CreateEquationHTML () {
+function CreateEquationHTML (curve) {
 	var string = "";
 	var substring = "";
+	var p = curve.polynomial;
 
-	for (var i = 0; i < eq.length; i++) {
-		if (eq[i].c == 1 && (eq[i].xp != 0 || eq[i].yp !=0)){
+	for (var i = 0; i < p.length; i++) {
+		if (p[i].c == 1 && (p[i].xp != 0 || p[i].yp !=0)){
 			substring = " + ";
-		} else if (eq[i].c == -1 && (eq[i].xp != 0 || eq[i].yp !=0)) {
+		} else if (p[i].c == -1 && (p[i].xp != 0 || p[i].yp !=0)) {
 			substring = " - ";
-		} else if (eq[i].c > 0) {
-			substring = " + " + eq[i].c; 
+		} else if (p[i].c > 0) {
+			substring = " + " + p[i].c; 
 		} else {
-			substring = " - " + Math.abs(eq[i].c);
+			substring = " - " + Math.abs(p[i].c);
 		}
 
 		string = string + substring;
 
-		if (eq[i].xp == 0){
+		if (p[i].xp == 0){
 			substring = ""
-		} else if (eq[i].xp == 1) {
+		} else if (p[i].xp == 1) {
 			substring = "<i>x</i>"; 
 		} else {
-			substring = "<i>x</i><sup>" + eq[i].xp + "</sup>";
+			substring = "<i>x</i><sup>" + p[i].xp + "</sup>";
 		}
 
 		string = string + substring;
 
-		if (eq[i].yp == 0){
+		if (p[i].yp == 0){
 			substring = ""
-		} else if (eq[i].yp == 1) {
+		} else if (p[i].yp == 1) {
 			substring = "<i>y</i>"; 
 		} else {
-			substring = "<i>y</i><sup>" + eq[i].yp + "</sup>";
+			substring = "<i>y</i><sup>" + p[i].yp + "</sup>";
 		}
 
 		string = string + substring;
