@@ -65,6 +65,11 @@ input:focus{
 #equationDiv {
 	margin: 1em;
 	text-align: center;
+	font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+#equationDiv i, #equationDiv sup {
+	font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
 .dot {

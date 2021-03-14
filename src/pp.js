@@ -222,18 +222,6 @@ function Draw () {
 			}
 		}
 	}
-
-
-	//if (options.axis) {
-		//uictx.beginPath();
-		//coordinates = ToCanvasCoordinates(M[1], M[4]);
-		//uictx.moveTo(coordinates.w, coordinates.h);
-		//for (i = 0; i < 2*Math.PI; i = i + 0.1){
-		//	coordinates = ToCanvasCoordinates(M[1]*Math.cos(i) + M[2]*Math.sin(i), M[4]*Math.cos(i) + M[5]*Math.sin(i));
-		//	uictx.lineTo(coordinates.w, coordinates.h);
-		//}
-		//uictx.stroke();
-	//}
 }
 
 
@@ -340,7 +328,6 @@ function Setup () {
 		}
 	}
 
-	//document.getElementById("checkboxAxis").checked = options.axis;
 	document.getElementById("checkboxTriangle").checked = options.triangle;
 	document.getElementById("checkboxLevel").checked = options.level;
 	document.getElementById("checkboxChessboard").checked = options.chessboard;
@@ -457,9 +444,9 @@ function CreateEquationHTML () {
 		if (eq[i].xp == 0){
 			substring = ""
 		} else if (eq[i].xp == 1) {
-			substring = "X"; 
+			substring = "<i>x</i>"; 
 		} else {
-			substring = "X<sup>" + eq[i].xp + "</sup>";
+			substring = "<i>x</i><sup>" + eq[i].xp + "</sup>";
 		}
 
 		string = string + substring;
@@ -467,13 +454,17 @@ function CreateEquationHTML () {
 		if (eq[i].yp == 0){
 			substring = ""
 		} else if (eq[i].yp == 1) {
-			substring = "Y"; 
+			substring = "<i>y</i>"; 
 		} else {
-			substring = "Y<sup>" + eq[i].yp + "</sup>";
+			substring = "<i>y</i><sup>" + eq[i].yp + "</sup>";
 		}
 
 		string = string + substring;
 	}
 
-	return "<span style='font-family:Georgia, serif'>" + string + " = 0</span>";
+	if (string.charAt(1) == '+'){
+		string = string.substring(2);
+	}
+
+	return string + " = 0";
 }
