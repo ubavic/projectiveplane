@@ -72,7 +72,7 @@ function polynomialEval (p, X, Y, Z) {
 	return result;
 }
 
-function SimplifyPolynome (p) {
+function SimplifyPolynomial (p) {
 	var i, j;
 	var q = [];
 
@@ -97,7 +97,7 @@ function SimplifyPolynome (p) {
 	return q;
 }
 
-function MultiplePolinomes (p, q) {
+function MultiplePolynomials (p, q) {
 	var i, j;
 	var t = [];
 
@@ -114,7 +114,7 @@ function MultiplePolinomes (p, q) {
 }
 
 
-function DerivePolynome (p, variable) {
+function DerivePolynomial (p, variable) {
 	var q = [];
 
 	if (variable == "x" || variable == "X") {
@@ -137,11 +137,11 @@ function DerivePolynome (p, variable) {
 		}
 	}
 
-	return SimplifyPolynome(q);
+	return SimplifyPolynomial(q);
 }
 
 
-function ScalePolynome (p, lambda) {
+function ScalePolynomial (p, lambda) {
 	var q = [];
 
 	for (var i = 0; i < p.length; i++) {
@@ -152,31 +152,33 @@ function ScalePolynome (p, lambda) {
 }
 
 
-function AddPolynomes (p, q) {
-	return SimplifyPolynome (p.concat(q));
+function AddPolynomials (p, q) {
+	return SimplifyPolynomial (p.concat(q));
 }
 
-function SubPolynomes (p, q) {
-	return AddPolynomes (p, ScalePolynome(q, -1));
+function SubPolynomials (p, q) {
+	return AddPolynomials (p, ScalePolynomial(q, -1));
 }
 
 
 function Hessian (p) {
-	var px = DerivePolynome(p, "x");
-	var py = DerivePolynome(p, "y");
-	var pz = DerivePolynome(p, "z");
-	var pxx = DerivePolynome(px, "x");
-	var pxy = DerivePolynome(px, "y");
-	var pxz = DerivePolynome(px, "z");
-	var pyy = DerivePolynome(py, "y");
-	var pyz = DerivePolynome(py, "z");
-	var pzz = DerivePolynome(pz, "z");
+	var px = DerivePolynomial(p, "x");
+	var py = DerivePolynomial(p, "y");
+	var pz = DerivePolynomial(p, "z");
+	var pxx = DerivePolynomial(px, "x");
+	var pxy = DerivePolynomial(px, "y");
+	var pxz = DerivePolynomial(px, "z");
+	var pyy = DerivePolynomial(py, "y");
+	var pyz = DerivePolynomial(py, "z");
+	var pzz = DerivePolynomial(pz, "z");
 
-	var M1 = MultiplePolinomes(pxx, SubPolynomes(MultiplePolinomes(pyy, pzz), MultiplePolinomes(pyz, pyz)));
-	var M2 = MultiplePolinomes(pxy, SubPolynomes(MultiplePolinomes(pxy, pzz), MultiplePolinomes(pxz, pyz)));
-	var M3 = MultiplePolinomes(pxz, SubPolynomes(MultiplePolinomes(pxy, pyz), MultiplePolinomes(pyy, pxz)));
+	var M1 = MultiplePolynomials(pxx, SubPolynomials(MultiplePolynomials(pyy, pzz), MultiplePolynomials(pyz, pyz)));
+	var M2 = MultiplePolynomials(pxy, SubPolynomials(MultiplePolynomials(pxy, pzz), MultiplePolynomials(pxz, pyz)));
+	var M3 = MultiplePolynomials(pxz, SubPolynomials(MultiplePolynomials(pxy, pyz), MultiplePolynomials(pyy, pxz)));
 
-	return AddPolynomes(M1, SubPolynomes(M3, M2));
+	console.log (AddPolynomials(M1, SubPolynomials(M3, M2)));
+	return AddPolynomials(M1, SubPolynomials(M3, M2));
+
 }
 
 
@@ -207,7 +209,6 @@ function Draw () {
 			}
 		}
 	}
-
 
 	if(options.hessian){
 		ctx.fillStyle ="#0033FF";
@@ -392,7 +393,7 @@ function SaveImage () {
 	window.location.href=image;
 }
 
-function ParsePolynome (str) {
+function ParsePolynomial (str) {
 	var error = false;
 	var errorStr;
 	var p = [];
@@ -419,7 +420,7 @@ function Parse () {
 	userCurve.degree = 0;
 
 	try {
-		p = ParsePolynome(equationField.value);
+		p = ParsePolynomial(equationField.value);
 	} catch (error) {
 		equationDiv.innerHTML = "<span style='color:#F00'>" + error + "</span>";
 		error = true;
