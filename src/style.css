@@ -81,12 +81,15 @@ input:focus{
 	position: absolute; 
 	z-index: 2;
 	top: 0;
-	left: 0; 
+	left: 0;
+	box-shadow: #33A 0 0 0px 0px;
+	transition: ease-in-out 0.2s box-shadow;
 }
 
 .dot:hover {
 	cursor: grab;
-	background-color: #99D; 
+	background-color: #99D;
+	box-shadow: #33A 0 0 10px 2px;
 }
 
 

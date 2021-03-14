@@ -253,6 +253,9 @@ function Setup () {
 	var cvs = document.getElementById("canvas");
 	ctx = cvs.getContext("2d");
 
+	cvs.width = cvs.getBoundingClientRect().width;
+	cvs.height = cvs.getBoundingClientRect().width;
+
 	width = cvs.width;
 	height = cvs.height;
 
