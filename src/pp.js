@@ -279,11 +279,8 @@ function Setup () {
 		dot.style.top = (coordinates.h - 3) + "px";
 		dot.style.left = (coordinates.w - 3) + "px";
 
-		dot.onmousedown = function (e) {
-			drag[i] = true;
-			document.body.style.cursor = "grab";
-			lambdas = Norm([M[i + 0], M[i + 3], M[i + 6]]);;
-		};
+		dot.onmousedown = function(e) {MouseDown(e, i)};
+		dot.ontouchstart = function(e) {MouseDown(e, i)};
 
 		dot.ondblclick = function (e) {
 			M[i + 6] = -1 * M[i + 6];
@@ -307,41 +304,12 @@ function Setup () {
 		};
 	}
 
-	document.getElementById("canvasContainer").onmouseup = function (e) {
-		document.body.style.cursor = "default";
-		drag[0] = false;
-		drag[1] = false;
-		drag[2] = false;
-	};
+	document.getElementById("canvasContainer").onmouseup = MouseUp;
+	document.getElementById("canvasContainer").ontouchcancel = MouseUp;
+	document.getElementById("canvasContainer").ontouchcend = MouseUp;
 
-	document.getElementById("canvas").onmousemove = function (e) {
-
-		var x = e.pageX - document.getElementById("canvasContainer").offsetLeft;
-		var y = e.pageY - document.getElementById("canvasContainer").offsetTop;
-		var coordinates = ToPlaneCoordinates(x, y);
-
-		for (var i = 0; i < 3; i++){
-			if (drag [i]) {
-				var sign = (M[i + 6] >= 0) ? 1 : -1;
-				if (coordinates.x**2 + coordinates.y**2 <= 1){
-	 				M[i + 0] = lambdas * coordinates.x;
-	 				M[i + 3] = lambdas * coordinates.y;
-	 				M[i + 6] = sign * lambdas * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
-	 			} else {
-	 				M[i + 0] = lambdas * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 				M[i + 3] = lambdas * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
-	 				M[i + 6] = sign * lambdas * 0;
-	 			}
-	
-				var norm = Norm([M[i + 0], M[i + 3], M[i + 6]]);
-				coordinates = ToCanvasCoordinates(M[i + 0] / norm, M[i + 3] / norm);
-				document.getElementById("dot" + i).style.left = (coordinates.w- 3) + "px";
-				document.getElementById("dot" + i).style.top = (coordinates.h - 3) + "px";
-	 			changed = true;
-	 			break;
-	 		}
-		}
-	}
+	document.getElementById("canvas").onmousemove = MouseMove;
+	document.getElementById("canvas").ontouchmove = MouseMove;
 
 	document.getElementById("checkboxTriangle").checked = options.triangle;
 	document.getElementById("checkboxLevel").checked = options.level;
@@ -505,5 +473,47 @@ function SwitchCoordinateTriangle() {
 			dot.style.display = "none";
 		else
 			dot.style.display = "block";
+	}
+}
+
+function MouseUp (e) {
+	document.body.style.cursor = "default";
+	drag[0] = false;
+	drag[1] = false;
+	drag[2] = false;
+}
+
+function MouseDown (e, i) {
+	drag[i] = true;
+	document.body.style.cursor = "grab";
+	lambdas = Norm([M[i + 0], M[i + 3], M[i + 6]]);
+} 
+
+function MouseMove (e) {
+	e.preventDefault();
+	var x = e.pageX - document.getElementById("canvasContainer").offsetLeft;
+	var y = e.pageY - document.getElementById("canvasContainer").offsetTop;
+	var coordinates = ToPlaneCoordinates(x, y);
+
+	for (var i = 0; i < 3; i++){
+		if (drag [i]) {
+			var sign = (M[i + 6] >= 0) ? 1 : -1;
+			if (coordinates.x**2 + coordinates.y**2 <= 1){
+	 			M[i + 0] = lambdas * coordinates.x;
+	 			M[i + 3] = lambdas * coordinates.y;
+	 			M[i + 6] = sign * lambdas * Math.sqrt(1 - coordinates.x**2 - coordinates.y**2);
+	 		} else {
+	 			M[i + 0] = lambdas * coordinates.x / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[i + 3] = lambdas * coordinates.y / Math.sqrt(coordinates.x**2 + coordinates.y**2);
+	 			M[i + 6] = sign * lambdas * 0;
+	 		}
+
+			var norm = Norm([M[i + 0], M[i + 3], M[i + 6]]);
+			coordinates = ToCanvasCoordinates(M[i + 0] / norm, M[i + 3] / norm);
+			document.getElementById("dot" + i).style.left = (coordinates.w- 3) + "px";
+			document.getElementById("dot" + i).style.top = (coordinates.h - 3) + "px";
+	 		changed = true;
+	 		break;
+	 	}
 	}
 }
