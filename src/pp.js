@@ -176,9 +176,7 @@ function Hessian (p) {
 	var M2 = MultiplePolynomials(pxy, SubPolynomials(MultiplePolynomials(pxy, pzz), MultiplePolynomials(pxz, pyz)));
 	var M3 = MultiplePolynomials(pxz, SubPolynomials(MultiplePolynomials(pxy, pyz), MultiplePolynomials(pyy, pxz)));
 
-	console.log (AddPolynomials(M1, SubPolynomials(M3, M2)));
 	return AddPolynomials(M1, SubPolynomials(M3, M2));
-
 }
 
 
@@ -290,7 +288,7 @@ function Setup () {
 		dot.ondblclick = function (e) {
 			M[i + 6] = -1 * M[i + 6];
 			changed = true;
-			SwichCoordinateTriangle(i);
+			SwitchDotColor(i);
 		}
 
 		dot.onwheel = function (e) {
@@ -489,7 +487,7 @@ function CreateEquationHTML (curve) {
 }
 
 
-function SwichCoordinateTriangle(i) {
+function SwitchDotColor(i) {
 	let dot = document.getElementById("dot" + i);
 
 	if(dot.classList.contains('invertedDot')){
@@ -497,4 +495,15 @@ function SwichCoordinateTriangle(i) {
 	} else {
 		dot.classList.add('invertedDot');
 	}	
+}
+
+function SwitchCoordinateTriangle() {
+	for (var i = 0; i < 3; i++) {
+		let dot = document.getElementById("dot" + i);
+
+		if (!options.triangle)
+			dot.style.display = "none";
+		else
+			dot.style.display = "block";
+	}
 }
