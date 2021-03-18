@@ -92,6 +92,17 @@ input:focus{
 	box-shadow: #33A 0 0 10px 2px;
 }
 
+.invertedDot {
+	background-color: #AFA;
+}
+
+.invertedDot:hover {
+	cursor: grab;
+	background-color: #9D9;
+	box-shadow: #3A4 0 0 10px 2px;
+}
+
+
 
 @media only screen and (max-width: 1000px) {
 	main {

@@ -290,6 +290,7 @@ function Setup () {
 		dot.ondblclick = function (e) {
 			M[i + 6] = -1 * M[i + 6];
 			changed = true;
+			SwichCoordinateTriangle(i);
 		}
 
 		dot.onwheel = function (e) {
@@ -485,4 +486,15 @@ function CreateEquationHTML (curve) {
 	}
 
 	return string + " = 0";
+}
+
+
+function SwichCoordinateTriangle(i) {
+	let dot = document.getElementById("dot" + i);
+
+	if(dot.classList.contains('invertedDot')){
+		dot.classList.remove('invertedDot');
+	} else {
+		dot.classList.add('invertedDot');
+	}	
 }
