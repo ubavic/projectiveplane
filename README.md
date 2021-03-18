@@ -10,7 +10,7 @@ Type polynomial from ℝ[X, Y] into the text field to graph zero set of that pol
 
 You can change coordinate system (or equivalently, transform curve by projective transformation), by dragging vertices of coordinate triangle or using scroll wheel while holding pointer above one of the vertex (scrolling multiplies the corresponding column of transformation matrix with scalar). Double clicking on one of vertex changes sign of third coordinate of the corresponding column. With these three operations, it is possible to define all matrix in PGl₃ℝ.
 
-![Basis](img/baisis.png)
+![Basis](img/basis.png)
 
 ### Example
 
