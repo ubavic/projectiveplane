@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Projective plane</title>
+		<meta name="description" content="Interactive real projective plane.">
+		<meta name="author" content="Nikola Ubavić">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" type="text/css" href="style.css">
+	</head>
+	<body>
+		<main>
+			<div id="ui">
+				<h1>Projective plane</h1>
+				<form>
+				<label for="equationField">Type polynomial form <strong style="font-family: serif;">R</strong> [X, Y]:</label>
+				<input type="text" id="equationField">
+				<label for="equationDropDown">Or choose from examples:</label>
+				<select id="equationDropDown">
+		  			<optgroup label="Quadratic">
+		  				<option value="0">Elipse</option>
+		  				<option value="1">Parabola</option>
+		  				<option value="2">Hyperbola</option>
+		  			</optgroup>
+		  			<optgroup label="Cubic">
+		  				<option value="3">Eliptic curve (one of)</option>
+		  				<option value="4">Semicubical parabola</option>
+		  				<option value="5">Folium of Descartes</option>
+		  				<option value="6">Witch of Agnesi</option>
+		  			</optgroup>
+		  			<optgroup label="Quartic">
+		  				<option value="7">Lemniscate of Bernoulli</option>
+		  				<option value="8">Viviani's Curve</option>
+		  				<option value="9">Three-leaved clover</option>
+		  			</optgroup>
+		  			<option value="20">Custom</option>
+				</select>
+				</form>
+				<div id="equation"></div>
+				<p>Matrix of projective transformation is:</p>
+				<div id="matrixContainer">
+					<table id="matrix" style="align-self: center;">
+						<tr>
+							<td id="ii" rowspan="3" style="width: 50px"> M = </td>
+							<td id="i0"></td>
+							<td id="i1"></td>
+							<td id="i2"></td>
+						</tr>
+						<tr>
+							<td id="i3"></td>
+							<td id="i4"></td>
+							<td id="i5"></td>
+						</tr>
+						<tr>
+							<td id="i6"></td>
+							<td id="i7"></td>
+							<td id="i8"></td>
+						</tr>
+					</table>
+					<div style="align-self: center; width: 150px">det(M) = <span id="det" style="width: 50px">1</span></div>
+					<button onclick="reset()">Reset matrix</button>
+				</div>
+				<p>Draw:
+					<div>
+						<span>
+							<input style="margin-left: 10px;" type="checkbox" id="checkboxTriangle" onclick="state.triangle = !state.triangle; switchCoordinateTriangle()">
+							<label for="checkboxTriangle">Coordinate triangle</label>
+						</span><br>
+						<span>
+							<input style="margin-left: 10px;" type="checkbox" id="checkboxLevel" onclick="state.level = !state.level; state.changed = true;">
+							<label for="checkboxLevel"><abbr title="|p(X,Y,Z)|&lt;0.2">Level set</abbr></label>
+						</span><br>
+						<span>
+							<input style="margin-left: 10px;" type="checkbox" id="checkboxCheckerboard" onclick="state.checkerboard = !state.checkerboard; state.changed = true;">
+							<label for="checkboxCheckerboard">Checkerboard</label>
+						</span><br>
+						<span><input style="margin-left: 10px;" type="checkbox" id="checkboxHessian" onclick="state.hessian = !state.hessian; state.changed = true; ">
+							<label for="checkboxHessian">Hessian curve</label>
+						</span>
+					</div>
+				</p>
+			</div>
+			<div id="canvasContainer" style="position: relative;">
+				<canvas id="canvas" width="600" height="600"></canvas>
+				<div class="dot" id="dot0"></div>
+				<div class="dot" id="dot1"></div>
+				<div class="dot" id="dot2"></div>
+				<div id="coordinates"></div>
+			</div>
+		</main>
+		<footer>Made by <a href="https://ubavic.rs">Nikola Ubavić</a>. Code is available on <a href="https://github.com/ubavic/projectiveplane">GitHub</a></footer>
+		<script src="pp.js"></script>
+		<script>
+			window.onload = Setup();
+		</script>
+	</body>
+</html>
