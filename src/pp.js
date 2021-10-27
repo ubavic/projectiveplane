@@ -133,16 +133,16 @@ void main() {
 `
 
 const curves = [
-	'+X2+2Y2-1',			//elipse
+	'X2+2Y2-1',				//ellipse
 	'X2-Y',					//parabola
 	'X2-Y2-1',				//hyperbola
-	'Y2-1X3+4X',			//eliptic
-	'Y2-1X3',				//semicubical parabola
+	'Y2-1X3+4X',			//elliptic curve
+	'Y2-X3',				//semicubical parabola
 	'X3+Y3-3XY',			//folium of Descartes
 	'X2Y+Y-1',				//witch of Agnesi
-	'X4+2X2Y2+Y4-1X2+Y2',	//lemniscate of Bernoulli
+	'X4+2X2Y2+Y4-X2+Y2',	//lemniscate of Bernoulli
 	'4X2+Y4-4Y2',			//Viviani's Curve
-	'X4+2X2Y2+Y4-1X3+3XY2' 	//Three-leaved clover
+	'X4+2X2Y2+Y4-X3+3XY2' 	//Three-leaved clover
 ]
 
 function det(M) {
@@ -389,6 +389,8 @@ function drawLoop() {
 
 function parse(str) {
 	let tokens = []
+
+	str = str.replace(/\s+/g, '')
 
 	if (str.length === 0)
 		throw `String is empty`
