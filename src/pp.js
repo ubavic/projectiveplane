@@ -6,7 +6,6 @@ var hessianCurve = { polynomial: 0, degree: 0, gsls: '' }
 
 const I = [1, 0, 0, 0, 1, 0, 0, 0, 1]
 var M = [...I]
-var Mi
 
 var state = {
 	axis: true,
@@ -151,9 +150,9 @@ function det(M) {
 		+ M[2] * (M[3] * M[7] - M[4] * M[6])
 }
 
-function Inverse(M) {
+function inverse(M) {
 	const d = det(M)
-	return [
+	return new Float32Array([
 		(M[4] * M[8] - M[7] * M[5]) / d,
 		(M[1] * M[8] - M[2] * M[7]) / -d,
 		(M[1] * M[5] - M[2] * M[4]) / d,
@@ -163,7 +162,7 @@ function Inverse(M) {
 		(M[3] * M[7] - M[4] * M[6]) / d,
 		(M[0] * M[7] - M[1] * M[6]) / -d,
 		(M[0] * M[4] - M[1] * M[3]) / d
-	]
+	])
 }
 
 function norm(u) {
@@ -353,7 +352,7 @@ function setGL() {
 	gl.uniform2f(shaderUniformLocations.resolution, gl.canvas.width, gl.canvas.height)
 
 	shaderUniformLocations.projectiveMatrix = gl.getUniformLocation(shaderProgram, 'u_M')
-	gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, new Float32Array(Mi))
+	gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
 
 	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
 }
@@ -361,8 +360,6 @@ function setGL() {
 
 function drawLoop() {
 	if (state.changed) {
-		Mi = Inverse(M)
-
 		const d = det(M)
 
 		ui.det.innerHTML = d.toFixed(2)
@@ -378,7 +375,7 @@ function drawLoop() {
 		gl.uniform1i(shaderUniformLocations.level, state.level ? 1 : 0)
 		gl.uniform1i(shaderUniformLocations.checkerboard, state.checkerboard ? 1 : 0)
 		gl.uniform1i(shaderUniformLocations.hessian, state.hessian ? 1 : 0)
-		gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, new Float32Array(Mi))
+		gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
 
 		state.changed = false
@@ -603,7 +600,7 @@ function mouseMove(e) {
 }
 
 
-function Setup() {
+function setup() {
 	const cvs = document.getElementById('canvas')
 	gl = cvs.getContext('webgl2')
 
@@ -684,8 +681,6 @@ function Setup() {
 			setCurve()
 		}
 	}
-
-	Mi = Inverse(M)
 
 	setGL()
 	window.requestAnimationFrame(drawLoop)

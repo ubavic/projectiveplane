@@ -81,7 +81,9 @@
 				</p>
 			</div>
 			<div id="canvasContainer" style="position: relative;">
-				<canvas id="canvas" width="600" height="600"></canvas>
+				<canvas id="canvas" width="600" height="600">
+					Your browser doesn't support WebGL2.
+				</canvas>
 				<div class="dot" id="dot0"></div>
 				<div class="dot" id="dot1"></div>
 				<div class="dot" id="dot2"></div>
@@ -91,7 +93,7 @@
 		<footer>Made by <a href="https://ubavic.rs/?lang=en">Nikola Ubavić</a>. Code is available on <a href="https://github.com/ubavic/projectiveplane">GitHub</a></footer>
 		<script src="pp.js"></script>
 		<script>
-			window.onload = Setup();
+			window.onload = setup();
 		</script>
 	</body>
 </html>
