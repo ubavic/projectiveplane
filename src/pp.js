@@ -91,7 +91,10 @@ vec2 grad(vec2 x) {
 float color(vec2 v) {
 	float s = p(v);
 	vec2 g = grad(v);
-	float de = abs(s) / length(g);
+	float glen = length(g);
+	if (!(glen > 1e-5))
+		return abs(s) > 1e-4 ? 1.0 : 0.0;
+	float de = abs(s) / glen;
 	float eps = 0.002;
 	return smoothstep(1.0 * eps, 2.0 * eps, de);
 }
@@ -228,19 +231,17 @@ function mul(p, q) {
 function derive(p, variable) {
 	let q = []
 
-	if (variable == 'x')
-		q = p.map(m => ({ ...m, x: (m.x - 1), c: (m.c * m.x) }))
-	else if (variable == 'y')
-		q = p.map(m => ({ ...m, y: (m.y - 1), c: (m.c * m.y) }))
-	else if (variable == 'z')
-		q = p.map(m => ({ ...m, z: (m.z - 1), c: (m.c * m.z) }))
-	else
-		q = [{ x: 0, y: 0, z: 0, c: 0 }]
+	for (let i = 0; i < p.length; i++) {
+		let e = variable == 'x' ? p[i].x : variable == 'y' ? p[i].y : variable == 'z' ? p[i].z : 0
+		if (e == 0)
+			continue
 
-	for (let i = 0; i < q.length; i++) {
-		if ((q[i].x + 1) * (q[i].y + 1) * (q[i].z + 1) == 0) {
-			q[i] = { x: 0, p: 0, z: 0, c: 0 }
-		}
+		q.push({
+			c: p[i].c * e,
+			x: p[i].x - (variable == 'x' ? 1 : 0),
+			y: p[i].y - (variable == 'y' ? 1 : 0),
+			z: p[i].z - (variable == 'z' ? 1 : 0),
+		})
 	}
 
 	return simplify(q)
@@ -274,6 +275,21 @@ function hessian(p) {
 	let M3 = mul(pxz, sub(mul(pxy, pyz), mul(pyy, pxz)))
 
 	return add(M1, sub(M3, M2))
+}
+
+function polynomialVanishes(p) {
+	if (!p || p.length == 0)
+		return true
+
+	for (let i = 0; i < p.length; i++)
+		if (p[i].c != 0)
+			return false
+
+	return true
+}
+
+function showHessian() {
+	return state.hessian && !polynomialVanishes(hessianCurve.polynomial)
 }
 
 function homogenize(affine) {
@@ -392,7 +408,7 @@ function setGL() {
 	gl.uniform1i(shaderUniformLocations.checkerboard, state.checkerboard ? 1 : 0)
 
 	shaderUniformLocations.hessian = gl.getUniformLocation(shaderProgram, 'u_hessian')
-	gl.uniform1i(shaderUniformLocations.hessian, state.hessian ? 1 : 0)
+	gl.uniform1i(shaderUniformLocations.hessian, showHessian() ? 1 : 0)
 
 	shaderUniformLocations.axis = gl.getUniformLocation(shaderProgram, 'u_axis')
 	gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
@@ -423,7 +439,7 @@ function drawLoop() {
 
 		gl.uniform1i(shaderUniformLocations.level, state.level ? 1 : 0)
 		gl.uniform1i(shaderUniformLocations.checkerboard, state.checkerboard ? 1 : 0)
-		gl.uniform1i(shaderUniformLocations.hessian, state.hessian ? 1 : 0)
+		gl.uniform1i(shaderUniformLocations.hessian, showHessian() ? 1 : 0)
 		gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
 		gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
@@ -557,7 +573,7 @@ function createEquationHTML(curve) {
 	let substring = ''
 	let p = curve.polynomial
 
-	if (p.length === 0)
+	if (polynomialVanishes(p))
 		return '0 = 0'
 
 	for (let i = 0; i < p.length; i++) {
