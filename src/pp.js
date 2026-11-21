@@ -31,6 +31,7 @@ var ui = {
 	dropDown: null,
 	equation: null,
 	equationField: null,
+	hessianPolynomial: null,
 }
 
 const vertexShaderSource = `#version 300 es
@@ -563,6 +564,7 @@ function setCurve() {
 
 		hessianCurve.polynomial = hessian(userCurve.polynomial)
 		ui.equation.innerHTML = createEquationHTML(userCurve)
+		ui.hessianPolynomial.innerHTML = createEquationHTML(hessianCurve, true).trim()
 
 		userCurve.code = createPolynomialGLSL(userCurve.polynomial)
 		hessianCurve.code = createPolynomialGLSL(hessianCurve.polynomial)
@@ -574,7 +576,7 @@ function setCurve() {
 	}
 }
 
-function createEquationHTML(curve) {
+function createEquationHTML(curve, homogeneous) {
 	let string = ''
 	let substring = ''
 	let p = curve.polynomial
@@ -583,9 +585,11 @@ function createEquationHTML(curve) {
 		return '0 = 0'
 
 	for (let i = 0; i < p.length; i++) {
-		if (p[i].c == 1 && (p[i].x != 0 || p[i].y != 0))
+		let hasVariable = p[i].x != 0 || p[i].y != 0 || (homogeneous && p[i].z != 0)
+
+		if (p[i].c == 1 && hasVariable)
 			substring = ' + '
-		else if (p[i].c == -1 && (p[i].x != 0 || p[i].y != 0))
+		else if (p[i].c == -1 && hasVariable)
 			substring = ' - '
 		else if (p[i].c > 0)
 			substring = ' + ' + p[i].c
@@ -611,6 +615,17 @@ function createEquationHTML(curve) {
 			substring = `<i>y</i><sup>${p[i].y}</sup>`
 
 		string = string + substring
+
+		if (homogeneous) {
+			if (p[i].z == 0)
+				substring = ''
+			else if (p[i].z == 1)
+				substring = '<i>z</i>'
+			else
+				substring = `<i>z</i><sup>${p[i].z}</sup>`
+
+			string = string + substring
+		}
 	}
 
 	if (string.charAt(1) == '+')
@@ -794,6 +809,7 @@ function setup() {
 	ui.dropDown = document.getElementById('equationDropDown')
 	ui.equation = document.getElementById('equation')
 	ui.equationField = document.getElementById('equationField')
+	ui.hessianPolynomial = document.getElementById('hessianPolynomial')
 
 	ui.dropDown.value = 0
 	ui.equationField.value = curves[0]
