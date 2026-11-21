@@ -82,6 +82,11 @@ input[type='text']:focus {
 	margin: 1em;
 	text-align: center;
 	font-size: 1.2em;
+	user-select: text;
+}
+
+#equationField {
+	user-select: text;
 }
 
 .dot {
@@ -141,7 +146,7 @@ input[type='text']:focus {
 	}
 
 	#canvasContainer {
-		max-width: 100;
+		max-width: 100%;
 		margin: 0 auto;
 	}
 }
