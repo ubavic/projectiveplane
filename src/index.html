@@ -67,18 +67,18 @@
 						<label for="checkboxTriangle">Coordinate triangle</label>
 					</span><br>
 					<span>
-						<input style="margin-left: 10px;" type="checkbox" id="checkboxAxis" onclick="state.axis = !state.axis; state.changed = true;">
+						<input style="margin-left: 10px;" type="checkbox" id="checkboxAxis" onclick="state.axis = !state.axis; draw();">
 						<label for="checkboxAxis">Coordinate lines</label>
 					</span><br>
 					<span>
-						<input style="margin-left: 10px;" type="checkbox" id="checkboxLevel" onclick="state.level = !state.level; state.changed = true;">
+						<input style="margin-left: 10px;" type="checkbox" id="checkboxLevel" onclick="state.level = !state.level; draw();">
 						<label for="checkboxLevel"><abbr title="|p(X,Y,Z)|&lt;0.2">Level set</abbr></label>
 					</span><br>
 					<span>
-						<input style="margin-left: 10px;" type="checkbox" id="checkboxCheckerboard" onclick="state.checkerboard = !state.checkerboard; state.changed = true;">
+						<input style="margin-left: 10px;" type="checkbox" id="checkboxCheckerboard" onclick="state.checkerboard = !state.checkerboard; draw();">
 						<label for="checkboxCheckerboard">Checkerboard</label>
 					</span><br>
-					<span><input style="margin-left: 10px;" type="checkbox" id="checkboxHessian" onclick="state.hessian = !state.hessian; state.changed = true; ">
+					<span><input style="margin-left: 10px;" type="checkbox" id="checkboxHessian" onclick="state.hessian = !state.hessian; draw();">
 						<label for="checkboxHessian">Hessian curve</label>
 					</span>
 				</div>

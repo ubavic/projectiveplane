@@ -13,7 +13,6 @@ var state = {
 	triangle: true,
 	level: false,
 	hessian: false,
-	changed: true,
 	drag: [false, false, false]
 }
 
@@ -35,11 +34,16 @@ var ui = {
 }
 
 const vertexShaderSource = `#version 300 es
-	in vec4 a_position;
+	layout(location = 0) in vec4 a_position;
 	void main(void) {
 		gl_Position = a_position;
 	}
 `
+
+var shaderProgram = null
+var vertexShader = null
+var fragmentShader = null
+var triangleArray = null
 
 const fragmentShaderSource = () => `#version 300 es
 precision mediump float;
@@ -363,29 +367,12 @@ function createShader(gl, type, source) {
 	return shader
 }
 
-function createProgram(gl, vertexShader, fragmentShader) {
-	const shaderProgram = gl.createProgram()
+function initGL() {
+	vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
+	shaderProgram = gl.createProgram()
 	gl.attachShader(shaderProgram, vertexShader)
-	gl.attachShader(shaderProgram, fragmentShader)
-	gl.linkProgram(shaderProgram)
 
-	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-		console.log('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram))
-		return null
-	}
-
-	return shaderProgram
-}
-
-function setGL() {
-	const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
-	const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource())
-
-	const shaderProgram = createProgram(gl, vertexShader, fragmentShader)
-
-	gl.useProgram(shaderProgram)
-
-	let triangleArray = gl.createVertexArray()
+	triangleArray = gl.createVertexArray()
 	gl.bindVertexArray(triangleArray)
 
 	let positions = new Float32Array([
@@ -400,55 +387,75 @@ function setGL() {
 	gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
 	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0)
 	gl.enableVertexAttribArray(0)
-
-	shaderUniformLocations.level = gl.getUniformLocation(shaderProgram, 'u_level')
-	gl.uniform1i(shaderUniformLocations.level, state.level ? 1 : 0)
-
-	shaderUniformLocations.checkerboard = gl.getUniformLocation(shaderProgram, 'u_checkerboard')
-	gl.uniform1i(shaderUniformLocations.checkerboard, state.checkerboard ? 1 : 0)
-
-	shaderUniformLocations.hessian = gl.getUniformLocation(shaderProgram, 'u_hessian')
-	gl.uniform1i(shaderUniformLocations.hessian, showHessian() ? 1 : 0)
-
-	shaderUniformLocations.axis = gl.getUniformLocation(shaderProgram, 'u_axis')
-	gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
-
-	shaderUniformLocations.resolution = gl.getUniformLocation(shaderProgram, 'u_resolution')
-	useCanvasResolution()
-
-	shaderUniformLocations.projectiveMatrix = gl.getUniformLocation(shaderProgram, 'u_M')
-	gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
-
-	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
 }
 
+function cacheUniforms() {
+	shaderUniformLocations.level = gl.getUniformLocation(shaderProgram, 'u_level')
+	shaderUniformLocations.checkerboard = gl.getUniformLocation(shaderProgram, 'u_checkerboard')
+	shaderUniformLocations.hessian = gl.getUniformLocation(shaderProgram, 'u_hessian')
+	shaderUniformLocations.axis = gl.getUniformLocation(shaderProgram, 'u_axis')
+	shaderUniformLocations.resolution = gl.getUniformLocation(shaderProgram, 'u_resolution')
+	shaderUniformLocations.projectiveMatrix = gl.getUniformLocation(shaderProgram, 'u_M')
+}
 
-function drawLoop() {
-	if (state.changed) {
-		const d = det(M)
+function replaceFragmentShader() {
+	const next = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource())
+	if (!next)
+		return
 
-		ui.det.innerHTML = d.toFixed(2)
+	const previous = fragmentShader
+	if (previous)
+		gl.detachShader(shaderProgram, previous)
 
-		if (Math.abs(d) < 0.001)
-			ui.det.style.color = '#FF0000'
-		else
-			ui.det.style.color = '#000000'
+	gl.attachShader(shaderProgram, next)
+	gl.linkProgram(shaderProgram)
 
-		for (let i = 0; i < 9; i++)
-			document.getElementById('i' + i).innerHTML = Number(M[i]).toFixed(2)
-
-		gl.uniform1i(shaderUniformLocations.level, state.level ? 1 : 0)
-		gl.uniform1i(shaderUniformLocations.checkerboard, state.checkerboard ? 1 : 0)
-		gl.uniform1i(shaderUniformLocations.hessian, showHessian() ? 1 : 0)
-		gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
-		gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
-		useCanvasResolution()
-		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
-
-		state.changed = false
+	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+		console.log('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram))
+		gl.detachShader(shaderProgram, next)
+		gl.deleteShader(next)
+		if (previous) {
+			gl.attachShader(shaderProgram, previous)
+			gl.linkProgram(shaderProgram)
+			gl.useProgram(shaderProgram)
+		}
+		return
 	}
 
-	window.requestAnimationFrame(drawLoop)
+	if (previous)
+		gl.deleteShader(previous)
+
+	fragmentShader = next
+	gl.useProgram(shaderProgram)
+	cacheUniforms()
+	draw()
+}
+
+function draw() {
+	if (!fragmentShader)
+		return
+
+	const d = det(M)
+
+	ui.det.innerHTML = d.toFixed(2)
+
+	if (Math.abs(d) < 0.001)
+		ui.det.style.color = '#FF0000'
+	else
+		ui.det.style.color = '#000000'
+
+	for (let i = 0; i < 9; i++)
+		document.getElementById('i' + i).innerHTML = Number(M[i]).toFixed(2)
+
+	gl.useProgram(shaderProgram)
+	gl.bindVertexArray(triangleArray)
+	gl.uniform1i(shaderUniformLocations.level, state.level ? 1 : 0)
+	gl.uniform1i(shaderUniformLocations.checkerboard, state.checkerboard ? 1 : 0)
+	gl.uniform1i(shaderUniformLocations.hessian, showHessian() ? 1 : 0)
+	gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
+	gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
+	useCanvasResolution()
+	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
 }
 
 function parse(str) {
@@ -544,7 +551,7 @@ function reset() {
 		placeDot(i, M[i + 0] / n, M[i + 3] / n)
 	}
 
-	state.changed = true
+	draw()
 }
 
 function setCurve() {
@@ -560,9 +567,7 @@ function setCurve() {
 		userCurve.code = createPolynomialGLSL(userCurve.polynomial)
 		hessianCurve.code = createPolynomialGLSL(hessianCurve.polynomial)
 
-		setGL()
-
-		state.changed = true
+		replaceFragmentShader()
 
 	} catch (error) {
 		ui.equation.innerHTML = `<span style='color:#F00'>${error}</span>`
@@ -669,7 +674,7 @@ function pointerMove(e) {
 
 			let n = norm([M[i + 0], M[i + 3], M[i + 6]])
 			placeDot(i, M[i + 0] / n, M[i + 3] / n)
-			state.changed = true
+			draw()
 			break
 		}
 	}
@@ -691,12 +696,13 @@ function resizeCanvas() {
 	let ratio = window.devicePixelRatio || 1
 	let buffer = Math.max(1, Math.round(cssSize * ratio))
 
+	let resized = false
 	if (cvs.width !== buffer || cvs.height !== buffer) {
 		cvs.width = buffer
 		cvs.height = buffer
 		width = buffer
 		height = buffer
-		state.changed = true
+		resized = true
 	}
 
 	if (!ui.dot[0])
@@ -706,6 +712,9 @@ function resizeCanvas() {
 		let n = norm([M[i + 0], M[i + 3], M[i + 6]])
 		placeDot(i, M[i + 0] / n, M[i + 3] / n)
 	}
+
+	if (resized)
+		draw()
 }
 
 var pixelRatioQuery = null
@@ -732,6 +741,8 @@ function setup() {
 		return
 	}
 
+	initGL()
+
 	ui.canvasContainer = document.getElementById('canvasContainer')
 
 	for (let i = 0; i < 3; i++) {
@@ -746,8 +757,8 @@ function setup() {
 
 		ui.dot[i].ondblclick = () => {
 			M[i + 6] = -1 * M[i + 6]
-			state.changed = true
 			switchDotColor(i)
+			draw()
 		}
 
 		ui.dot[i].onwheel = (e) => {
@@ -761,7 +772,7 @@ function setup() {
 			M[i + 0] = lambda * M[i + 0]
 			M[i + 3] = lambda * M[i + 3]
 			M[i + 6] = lambda * M[i + 6]
-			state.changed = true
+			draw()
 		}
 	}
 
@@ -800,8 +811,6 @@ function setup() {
 		}
 	}
 
-	setGL()
 	new ResizeObserver(() => resizeCanvas()).observe(ui.canvasContainer)
 	watchPixelRatio()
-	window.requestAnimationFrame(drawLoop)
 }
