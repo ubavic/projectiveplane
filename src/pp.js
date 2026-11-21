@@ -256,6 +256,21 @@ function hessian(p) {
 	return add(M1, sub(M3, M2))
 }
 
+function homogenize(affine) {
+	let p = simplify(affine.map(m => ({ c: m.c, x: m.x, y: m.y, z: 0 })))
+	let degree = p.length === 0 ? 0 : Math.max(...p.map(m => m.x + m.y))
+
+	return {
+		degree: degree,
+		polynomial: p.map(m => ({
+			c: m.c,
+			x: m.x,
+			y: m.y,
+			z: degree - m.x - m.y,
+		})),
+	}
+}
+
 function toCanvasCoordinates(x, y) {
 	return [width * (x + 1) / 2, height * (1 - y) / 2]
 }
@@ -403,10 +418,12 @@ function parse(str) {
 			tokens.push({ type: 'OPERATOR', value: str.charAt(0) })
 			str = str.slice(1)
 		} else if ('1234567890'.includes(str.charAt(0))) {
-			tokens.push({ type: 'NUMBER', value: parseInt(str) })
+			let digits = ''
 			while (str !== '' && '1234567890'.includes(str.charAt(0))) {
+				digits += str.charAt(0)
 				str = str.slice(1)
 			}
+			tokens.push({ type: 'NUMBER', value: parseInt(digits, 10) })
 		} else {
 			throw `Unrecognized symbol ${str.charAt(0)}`
 		}
@@ -482,11 +499,10 @@ function reset() {
 
 function setCurve() {
 	try {
-		let p = parse(ui.equationField.value)
+		let curve = homogenize(parse(ui.equationField.value))
 
-		userCurve.degree = Math.max(...p.map(m => m.x + m.y))
-
-		userCurve.polynomial = p.map(m => ({ ...m, z: userCurve.degree - m.x - m.y }))
+		userCurve.degree = curve.degree
+		userCurve.polynomial = curve.polynomial
 
 		hessianCurve.polynomial = hessian(userCurve.polynomial)
 		ui.equation.innerHTML = createEquationHTML(userCurve)
@@ -507,6 +523,9 @@ function createEquationHTML(curve) {
 	let string = ''
 	let substring = ''
 	let p = curve.polynomial
+
+	if (p.length === 0)
+		return '0 = 0'
 
 	for (let i = 0; i < p.length; i++) {
 		if (p[i].c == 1 && (p[i].x != 0 || p[i].y != 0))
