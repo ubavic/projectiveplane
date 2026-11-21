@@ -1,8 +1,8 @@
 var gl
 var width, height
 var lambda = 1, lambdas = 1
-var userCurve = { polynomial: 0, degree: 0, gsls: '' }
-var hessianCurve = { polynomial: 0, degree: 0, gsls: '' }
+var userCurve = { polynomial: 0, degree: 0, code: '' }
+var hessianCurve = { polynomial: 0, degree: 0, code: '' }
 
 const I = [1, 0, 0, 0, 1, 0, 0, 0, 1]
 var M = [...I]
@@ -335,7 +335,7 @@ function createPolynomialGLSL(p) {
 	let code = ''
 
 	for (let i = 0; i < p.length; i++) {
-		line = `p += ${p[i].c.toFixed(5)}`
+		let line = `p += ${p[i].c.toFixed(5)}`
 		if (p[i].x)
 			line += power('x', p[i].x)
 		if (p[i].y)
@@ -480,12 +480,12 @@ function parse(str) {
 		}
 	}
 
-	monomials = []
+	let monomials = []
 
 	while (tokens.length !== 0) {
-		m = []
+		let m = []
 		do {
-			token = tokens.shift()
+			let token = tokens.shift()
 			m.push(token)
 		} while (tokens.length !== 0 && tokens[0]?.type != 'OPERATOR')
 
@@ -497,7 +497,7 @@ function parse(str) {
 			throw `Unexpected symbol ${m[0].value}`
 	})
 
-	poly = monomials.map(m => {
+	let poly = monomials.map(m => {
 		let c = parseInt(m[0].value + '1')
 		let x = 0
 		let y = 0
