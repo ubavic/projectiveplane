@@ -414,7 +414,7 @@ function setGL() {
 	gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
 
 	shaderUniformLocations.resolution = gl.getUniformLocation(shaderProgram, 'u_resolution')
-	gl.uniform2f(shaderUniformLocations.resolution, gl.canvas.width, gl.canvas.height)
+	useCanvasResolution()
 
 	shaderUniformLocations.projectiveMatrix = gl.getUniformLocation(shaderProgram, 'u_M')
 	gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
@@ -442,6 +442,7 @@ function drawLoop() {
 		gl.uniform1i(shaderUniformLocations.hessian, showHessian() ? 1 : 0)
 		gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
 		gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
+		useCanvasResolution()
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
 
 		state.changed = false
@@ -675,6 +676,53 @@ function pointerMove(e) {
 }
 
 
+function useCanvasResolution() {
+	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+	if (shaderUniformLocations.resolution)
+		gl.uniform2f(shaderUniformLocations.resolution, gl.canvas.width, gl.canvas.height)
+}
+
+function resizeCanvas() {
+	let cvs = gl.canvas
+	let cssSize = cvs.getBoundingClientRect().width
+	if (cssSize <= 0)
+		return
+
+	let ratio = window.devicePixelRatio || 1
+	let buffer = Math.max(1, Math.round(cssSize * ratio))
+
+	if (cvs.width !== buffer || cvs.height !== buffer) {
+		cvs.width = buffer
+		cvs.height = buffer
+		width = buffer
+		height = buffer
+		state.changed = true
+	}
+
+	if (!ui.dot[0])
+		return
+
+	for (let i = 0; i < 3; i++) {
+		let n = norm([M[i + 0], M[i + 3], M[i + 6]])
+		placeDot(i, M[i + 0] / n, M[i + 3] / n)
+	}
+}
+
+var pixelRatioQuery = null
+
+function onPixelRatioChange() {
+	resizeCanvas()
+	watchPixelRatio()
+}
+
+function watchPixelRatio() {
+	if (pixelRatioQuery)
+		pixelRatioQuery.removeEventListener('change', onPixelRatioChange)
+
+	pixelRatioQuery = matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`)
+	pixelRatioQuery.addEventListener('change', onPixelRatioChange)
+}
+
 function setup() {
 	const cvs = document.getElementById('canvas')
 	gl = cvs.getContext('webgl2')
@@ -684,18 +732,10 @@ function setup() {
 		return
 	}
 
-	cvs.width = cvs.getBoundingClientRect().width
-	cvs.height = cvs.getBoundingClientRect().width
-
-	width = cvs.width
-	height = cvs.height
 	ui.canvasContainer = document.getElementById('canvasContainer')
 
 	for (let i = 0; i < 3; i++) {
 		ui.dot[i] = document.getElementById('dot' + i)
-
-		let n = norm([M[i + 0], M[i + 3], M[i + 6]])
-		placeDot(i, M[i + 0] / n, M[i + 3] / n)
 
 		ui.dot[i].addEventListener('mousedown', () => { mouseDown(i) })
 		ui.dot[i].addEventListener('touchstart', (e) => {
@@ -724,6 +764,8 @@ function setup() {
 			state.changed = true
 		}
 	}
+
+	resizeCanvas()
 
 	document.addEventListener('mouseup', mouseUp)
 	document.addEventListener('touchend', mouseUp)
@@ -759,5 +801,7 @@ function setup() {
 	}
 
 	setGL()
+	new ResizeObserver(() => resizeCanvas()).observe(ui.canvasContainer)
+	watchPixelRatio()
 	window.requestAnimationFrame(drawLoop)
 }
