@@ -80,31 +80,44 @@ input[type='text']:focus {
 }
 
 .dot {
-	border-radius: 50%;
-	border: 1px solid black;
-	width: 6px;
-	height: 6px; 
-	background-color: #AAF;
-	position: absolute; 
+	width: 44px;
+	height: 44px;
+	position: absolute;
 	z-index: 2;
 	top: 0;
 	left: 0;
-	box-shadow: #33A 0 0 0 0;
-	transition: ease-in-out 0.2s box-shadow;
+	touch-action: none;
+	cursor: grab;
+	-webkit-touch-callout: none;
 }
 
-.dot:hover {
-	cursor: grab;
+.dot::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 8px;
+	height: 8px;
+	box-sizing: border-box;
+	border-radius: 50%;
+	border: 1px solid black;
+	background-color: #AAF;
+	box-shadow: #33A 0 0 0 0;
+	transform: translate(-50%, -50%);
+	transition: ease-in-out 0.2s box-shadow, ease-in-out 0.2s background-color;
+}
+
+.dot:hover::after {
 	background-color: #99D;
 	box-shadow: #33A 0 0 10px 2px;
 }
 
-.invertedDot {
+.invertedDot::after {
 	background-color: #AFA;
+	box-shadow: #3A4 0 0 0 0;
 }
 
-.invertedDot:hover {
-	cursor: grab;
+.invertedDot:hover::after {
 	background-color: #9D9;
 	box-shadow: #3A4 0 0 10px 2px;
 }

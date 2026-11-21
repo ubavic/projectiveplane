@@ -271,12 +271,23 @@ function homogenize(affine) {
 	}
 }
 
-function toCanvasCoordinates(x, y) {
-	return [width * (x + 1) / 2, height * (1 - y) / 2]
+function eventPoint(e) {
+	if (e.touches && e.touches.length > 0)
+		return e.touches[0]
+	if (typeof e.clientX == 'number')
+		return e
+	return null
 }
 
-function toPlaneCoordinates(w, h) {
-	return [((w / width) * 2 - 1), (1 - (h / height) * 2)]
+function placeDot(i, planeX, planeY) {
+	let canvasRect = gl.canvas.getBoundingClientRect()
+	let containerRect = ui.canvasContainer.getBoundingClientRect()
+	let x = canvasRect.left - containerRect.left + (planeX + 1) / 2 * canvasRect.width
+	let y = canvasRect.top - containerRect.top + (1 - planeY) / 2 * canvasRect.height
+	let dot = ui.dot[i]
+
+	dot.style.left = `${x - dot.offsetWidth / 2}px`
+	dot.style.top = `${y - dot.offsetHeight / 2}px`
 }
 
 function createPolynomialGLSL(p) {
@@ -489,9 +500,7 @@ function reset() {
 
 	for (let i = 0; i < 3; i++) {
 		let n = norm([M[i + 0], M[i + 3], M[i + 6]])
-		let [w, h] = toCanvasCoordinates(M[i + 0] / n, M[i + 3] / n)
-		ui.dot[i].style.left = `${w - 3}px`
-		ui.dot[i].style.top = `${h - 3}px`
+		placeDot(i, M[i + 0] / n, M[i + 3] / n)
 	}
 
 	state.changed = true
@@ -589,11 +598,20 @@ function mouseDown(i) {
 	lambdas = norm([M[i + 0], M[i + 3], M[i + 6]])
 }
 
-function mouseMove(e) {
-	e.preventDefault()
-	let w = e.pageX - ui.canvasContainer.offsetLeft
-	let h = e.pageY - ui.canvasContainer.offsetTop
-	let [x, y] = toPlaneCoordinates(w, h)
+function pointerMove(e) {
+	if (!state.drag.includes(true))
+		return
+
+	if (e.cancelable)
+		e.preventDefault()
+
+	let point = eventPoint(e)
+	if (!point)
+		return
+
+	let rect = gl.canvas.getBoundingClientRect()
+	let x = ((point.clientX - rect.left) / rect.width) * 2 - 1
+	let y = 1 - ((point.clientY - rect.top) / rect.height) * 2
 
 	for (let i = 0; i < 3; i++) {
 		if (state.drag[i]) {
@@ -609,9 +627,7 @@ function mouseMove(e) {
 			}
 
 			let n = norm([M[i + 0], M[i + 3], M[i + 6]])
-			let [w, h] = toCanvasCoordinates(M[i + 0] / n, M[i + 3] / n)
-			ui.dot[i].style.left = `${w - 3}px`
-			ui.dot[i].style.top = `${h - 3}px`
+			placeDot(i, M[i + 0] / n, M[i + 3] / n)
 			state.changed = true
 			break
 		}
@@ -633,18 +649,20 @@ function setup() {
 
 	width = cvs.width
 	height = cvs.height
+	ui.canvasContainer = document.getElementById('canvasContainer')
 
 	for (let i = 0; i < 3; i++) {
 		ui.dot[i] = document.getElementById('dot' + i)
 
 		let n = norm([M[i + 0], M[i + 3], M[i + 6]])
-		let [w, h] = toCanvasCoordinates(M[i + 0] / n, M[i + 3] / n)
+		placeDot(i, M[i + 0] / n, M[i + 3] / n)
 
-		ui.dot[i].style.top = `${h - 3}px`
-		ui.dot[i].style.left = `${w - 3}px`
-
-		ui.dot[i].onmousedown = () => { mouseDown(i) }
-		ui.dot[i].ontouchstart = () => { mouseDown(i) }
+		ui.dot[i].addEventListener('mousedown', () => { mouseDown(i) })
+		ui.dot[i].addEventListener('touchstart', (e) => {
+			e.preventDefault()
+			mouseDown(i)
+		}, { passive: false })
+		ui.dot[i].addEventListener('contextmenu', (e) => { e.preventDefault() })
 
 		ui.dot[i].ondblclick = () => {
 			M[i + 6] = -1 * M[i + 6]
@@ -667,19 +685,17 @@ function setup() {
 		}
 	}
 
-	document.onmouseup = mouseUp
-	document.ontouchcancel = mouseUp
-	document.ontouchend = mouseUp
-
-	document.onmousemove = mouseMove
-	document.ontouchmove = mouseMove
+	document.addEventListener('mouseup', mouseUp)
+	document.addEventListener('touchend', mouseUp)
+	document.addEventListener('touchcancel', mouseUp)
+	document.addEventListener('mousemove', pointerMove)
+	document.addEventListener('touchmove', pointerMove, { passive: false })
 
 	document.getElementById('checkboxTriangle').checked = state.triangle
 	document.getElementById('checkboxLevel').checked = state.level
 	document.getElementById('checkboxCheckerboard').checked = state.checkerboard
 	document.getElementById('checkboxHessian').checked = state.hessian
 
-	ui.canvasContainer = document.getElementById('canvasContainer')
 	ui.det = document.getElementById('det')
 	ui.dropDown = document.getElementById('equationDropDown')
 	ui.equation = document.getElementById('equation')
