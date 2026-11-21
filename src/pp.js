@@ -8,7 +8,7 @@ const I = [1, 0, 0, 0, 1, 0, 0, 0, 1]
 var M = [...I]
 
 var state = {
-	axis: true,
+	axis: false,
 	checkerboard: true,
 	triangle: true,
 	level: false,
@@ -21,6 +21,7 @@ var shaderUniformLocations = {
 	level: false,
 	checkerboard: null,
 	hessian: null,
+	axis: null,
 	projectiveMatrix: null,
 }
 
@@ -46,12 +47,14 @@ precision mediump float;
 uniform int u_level;
 uniform int u_hessian;
 uniform int u_checkerboard;
+uniform int u_axis;
 uniform vec2 u_resolution;
 uniform mat3 u_M;
 
 int polynomial = 1;
 vec4 grey1 = vec4(0.9, 0.9, 0.9, 1.0);
 vec4 grey2 = vec4(0.6, 0.6, 0.6, 1.0);
+vec4 axisGray = vec4(0.25, 0.25, 0.25, 1.0);
 
 out vec4 outColor;
 
@@ -93,6 +96,12 @@ float color(vec2 v) {
 	return smoothstep(1.0 * eps, 2.0 * eps, de);
 }
 
+float axisLine(float value, vec2 g) {
+	float de = abs(value) / max(length(g), 1e-4);
+	float eps = 1.0 / u_resolution.y;
+	return smoothstep(eps, 2.0 * eps, de);
+}
+
 void main() {
 	float t = 0.0;
 	
@@ -114,6 +123,17 @@ void main() {
 		outColor = mix(grey1, grey2, t);
 	} else
 		outColor = grey1;
+
+	if (u_axis == 1) {
+		float z = max(sqrt(max(1.0 - dot(v, v), 0.0)), 1e-4);
+		vec3 dvx = vec3(1.0, 0.0, -v.x / z);
+		vec3 dvy = vec3(0.0, 1.0, -v.y / z);
+		float mask = 1.0;
+		mask = min(mask, axisLine(s.x, vec2(dot(dvx, u_M[0]), dot(dvy, u_M[0]))));
+		mask = min(mask, axisLine(s.y, vec2(dot(dvx, u_M[1]), dot(dvy, u_M[1]))));
+		mask = min(mask, axisLine(s.z, vec2(dot(dvx, u_M[2]), dot(dvy, u_M[2]))));
+		outColor = mix(axisGray, outColor, mask);
+	}
 	
 	if (u_hessian == 1) {
 		t = color(v);
@@ -374,6 +394,9 @@ function setGL() {
 	shaderUniformLocations.hessian = gl.getUniformLocation(shaderProgram, 'u_hessian')
 	gl.uniform1i(shaderUniformLocations.hessian, state.hessian ? 1 : 0)
 
+	shaderUniformLocations.axis = gl.getUniformLocation(shaderProgram, 'u_axis')
+	gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
+
 	shaderUniformLocations.resolution = gl.getUniformLocation(shaderProgram, 'u_resolution')
 	gl.uniform2f(shaderUniformLocations.resolution, gl.canvas.width, gl.canvas.height)
 
@@ -401,6 +424,7 @@ function drawLoop() {
 		gl.uniform1i(shaderUniformLocations.level, state.level ? 1 : 0)
 		gl.uniform1i(shaderUniformLocations.checkerboard, state.checkerboard ? 1 : 0)
 		gl.uniform1i(shaderUniformLocations.hessian, state.hessian ? 1 : 0)
+		gl.uniform1i(shaderUniformLocations.axis, state.axis ? 1 : 0)
 		gl.uniformMatrix3fv(shaderUniformLocations.projectiveMatrix, false, inverse(M))
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4)
 
@@ -692,6 +716,7 @@ function setup() {
 	document.addEventListener('touchmove', pointerMove, { passive: false })
 
 	document.getElementById('checkboxTriangle').checked = state.triangle
+	document.getElementById('checkboxAxis').checked = state.axis
 	document.getElementById('checkboxLevel').checked = state.level
 	document.getElementById('checkboxCheckerboard').checked = state.checkerboard
 	document.getElementById('checkboxHessian').checked = state.hessian
